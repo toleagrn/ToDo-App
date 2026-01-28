@@ -56,7 +56,8 @@ class ToDoList {
             taskTitle.classList.add("heading2");
             taskTitle.textContent = item.data.title;
 
-            const taskDescription = document.createElement("p");                taskDescription.classList.add("task-description");
+            const taskDescription = document.createElement("p");                
+            taskDescription.classList.add("task-description");
             taskDescription.textContent = item.data.description;
 
             const dueDate = document.createElement("p");

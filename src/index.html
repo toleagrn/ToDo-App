@@ -38,26 +38,34 @@
                     <label for="title-field">TITLE</label>
                     <input type="text" 
                         id="title-field" 
-                        name="title-field">
+                        name="title-field"
+                        minlength="3"
+                        maxlength="60">
+                    <span class="error-message" id="title-error"></span>
                 </div>
                 <div class="form-group">
                     <label for="description-field">DESCRIPTION</label>
                     <input type="text" 
                         id="description-field"
-                        name="description-field">
+                        name="description-field"
+                        maxlength="90">
+                    <span class="error-message" id="description-error"></span>
                 </div>
                 <div class="form-group">
                     <label for="notes-field">NOTES</label>
                     <textarea type="textarea" 
                         id="notes-field"
                         name="notes-field"
-                        rows="4"></textarea>
+                        rows="4"
+                        maxlength="500"></textarea>
+                    <span class="error-message" id="notes-error"></span>
                 </div>
                 <div class="form-group">
                     <label for="dueDate-field">DUE DATE</label>
                     <input type="date" 
                         id="dueDate-field" 
                         name="dueDate-field">
+                    <span class="error-message" id="dueDate-error"></span>
                 </div>
                 <div class="form-group">
                     

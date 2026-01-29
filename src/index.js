@@ -176,37 +176,61 @@ function showForm() {
 function hideForm() {
     overlay.classList.add("hidden");
     formAddTask.reset();
+    // Also clear error messages when the form is hidden/cancelled
+    const errors = formAddTask.querySelectorAll(".error-message");
+    errors.forEach(error => {
+        error.textContent = "";
+        error.classList.remove("visible");
+    });
 }
 
 function validateAndSaveTask(event) {
     event.preventDefault();
 
+    // --- 1. Clear previous errors ---
+    const errorMessages = formAddTask.querySelectorAll(".error-message");
+    errorMessages.forEach(error => {
+        error.textContent = "";
+        error.classList.remove("visible");
+    });
+
+    // --- 2. Get form values ---
     const title = document.querySelector("#title-field").value;
     const description = document.querySelector("#description-field").value;
     const dueDate = document.querySelector("#dueDate-field").value;
     const notes = document.querySelector("#notes-field").value;
 
-    // Basic validation - could be improved with inline messages
+    let isFormValid = true;
+
+    // --- 3. Validate each field ---
     if (title.length < 3 || title.length > 60) {
-        alert("Title must be between 3 and 60 characters!");
-        return;
-    }
-    if (description.length < 3 || description.length > 90) {
-        alert("Description must be between 3 and 90 characters!");
-        return;
-    }
-    if (!isDateValid(dueDate)) {
-        alert("Due date must be in the future!");
-        return;
-    }
-    if (notes.length > 500) {
-        alert("Notes must be shorter than 500 characters!");
-        return;
+        document.querySelector("#title-error").textContent = "Title must be between 3 and 60 characters!";
+        document.querySelector("#title-error").classList.add("visible");
+        isFormValid = false;
     }
 
-    const newTask = new Task(title, description, notes, dueDate, false);
-    workProject.saveNewTask(newTask);
-    hideForm();
+    if (description.length < 3 || description.length > 90) {
+        document.querySelector("#description-error").textContent = "Description must be between 3 and 90 characters!";
+        document.querySelector("#description-error").classList.add("visible");
+        isFormValid = false;
+    }
+    if (!isDateValid(dueDate)) {
+        document.querySelector("#dueDate-error").textContent = "Due date must be in the future!";
+        document.querySelector("#dueDate-error").classList.add("visible");
+        isFormValid = false;
+    }
+    if (notes.length > 500) {
+        document.querySelector("#notes-error").textContent = "Notes must be shorter than 500 characters!";
+        document.querySelector("#notes-error").classList.add("visible");
+        isFormValid = false;
+    }
+
+    // --- 4. Submit if valid ---
+    if (isFormValid) {
+        const newTask = new Task(title, description, notes, dueDate, false);
+        workProject.saveNewTask(newTask);
+        hideForm();
+    }
 }
 
 function highlightTodayTasks() {

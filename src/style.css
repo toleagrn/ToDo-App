@@ -298,3 +298,13 @@ header {
     color: var(--pine-teal);
     margin-left: 10%;
 }
+
+.error-message {
+  color: red;
+  font-size: 0.8rem;
+  display: none; 
+}
+
+.error-message.visible {
+  display: block; 
+}

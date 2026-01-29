@@ -9,16 +9,13 @@ function isDateValid(inputDate) {
     return selectedDate >= today;
 }
 
-// Load tasks from storage
-function loadTasksFromStorage() {
-    let tasks = Object.entries(localStorage).map(([key, value]) => {
-        try {
-            return {key, data: JSON.parse(value)};
-        } catch(error) {
-            return {key, data: value};
-        }
-    })
-    return tasks;
+// Storage functions
+function getTasksFromStorage() {
+    return JSON.parse(localStorage.getItem("tasks") || "[]");
+}
+
+function saveTasksToStorage(tasks) {
+    localStorage.setItem("tasks", JSON.stringify(tasks));
 }
 
 class Task {
@@ -30,226 +27,230 @@ class Task {
         this.dueDate = dueDate;
         this.doneStatus = doneStatus;
         this.project = project;
+        this.id = Date.now(); // Simple unique ID
     }
 }
 
 class ToDoList {
     constructor(projectName) {
         this.projectName = projectName;
-        this.tasks = loadTasksFromStorage();
+        this.tasks = getTasksFromStorage();
     }
 
-    displayTasksAll() {
-        // Getting the entries from localstorage
-        this.tasks = loadTasksFromStorage();
-        
-        // DOM scripting to display
+    render() {
         mainContainer.innerHTML = "";
         completeTaskDisplay.innerHTML = "";
 
-        for(const item of this.tasks) {
-            const taskContainer = document.createElement("div");
-            taskContainer.dataset.key = item.key;
-            taskContainer.classList.add("task-container");
-
-            const taskTitle = document.createElement("h2");
-            taskTitle.classList.add("heading2");
-            taskTitle.textContent = item.data.title;
-
-            const taskDescription = document.createElement("p");                taskDescription.classList.add("task-description");
-            taskDescription.textContent = item.data.description;
-
-            const dueDate = document.createElement("p");
-            dueDate.classList.add("due-date");
-            dueDate.textContent = item.data.dueDate;
-
-            const btnWrapper = document.createElement("div");
-            btnWrapper.classList.add("btn-wrapper");
-
-            const doneBtn = document.createElement("button");
-            doneBtn.classList.add("done-btn");
-            doneBtn.textContent = "✓";
-
-            const deleteBtn = document.createElement("button");
-            deleteBtn.classList.add("done-btn");
-            deleteBtn.classList.add("delete-task-btn");
-            deleteBtn.textContent = "x";
-
-            taskContainer.appendChild(taskTitle);
-            taskContainer.appendChild(taskDescription);
-            taskContainer.appendChild(dueDate);
-            btnWrapper.appendChild(doneBtn);
-            btnWrapper.appendChild(deleteBtn);
-            taskContainer.appendChild(btnWrapper);
-
-            if(!item.data.doneStatus){
-                taskContainer.classList.remove("completed");
-                mainContainer.appendChild(taskContainer);
-            } else {
-                completeTaskDisplay.appendChild(taskContainer);
-                taskContainer.classList.add("completed");
-            }   
-        }
-
+        this.tasks.forEach(task => this.renderTask(task));
     }
 
-    saveNewtask(task) {
-        localStorage.setItem(Date.now(), JSON.stringify(task));
+    renderTask(task) {
+        const taskContainer = document.createElement("div");
+        taskContainer.dataset.id = task.id;
+        taskContainer.classList.add("task-container");
+
+        const taskTitle = document.createElement("h2");
+        taskTitle.classList.add("heading2");
+        taskTitle.textContent = task.title;
+
+        const taskDescription = document.createElement("p");
+        taskDescription.classList.add("task-description");
+        taskDescription.textContent = task.description;
+
+        const dueDate = document.createElement("p");
+        dueDate.classList.add("due-date");
+        dueDate.textContent = task.dueDate;
+
+        const btnWrapper = document.createElement("div");
+        btnWrapper.classList.add("btn-wrapper");
+
+        const doneBtn = document.createElement("button");
+        doneBtn.classList.add("done-btn");
+        doneBtn.textContent = "✓";
+
+        const deleteBtn = document.createElement("button");
+        deleteBtn.classList.add("done-btn", "delete-task-btn");
+        deleteBtn.textContent = "x";
+
+        taskContainer.append(taskTitle, taskDescription, dueDate, btnWrapper);
+        btnWrapper.append(doneBtn, deleteBtn);
+
+        if (task.doneStatus) {
+            taskContainer.classList.add("completed");
+            completeTaskDisplay.appendChild(taskContainer);
+        } else {
+            mainContainer.appendChild(taskContainer);
+        }
+    }
+
+    saveNewTask(task) {
+        this.tasks.push(task);
+        saveTasksToStorage(this.tasks);
+        this.renderTask(task);
+    }
+
+    findTaskById(id) {
+        return this.tasks.find(task => task.id === id);
+    }
+
+    toggleDoneStatus(id) {
+        const task = this.findTaskById(id);
+        if (task) {
+            task.doneStatus = !task.doneStatus;
+            saveTasksToStorage(this.tasks);
+            this.render(); // Re-render for simplicity, but could be optimized
+        }
+    }
+
+    deleteTask(id) {
+        this.tasks = this.tasks.filter(task => task.id !== id);
+        saveTasksToStorage(this.tasks);
+        this.render();
+    }
+
+    getTaskNotes(id) {
+        const task = this.findTaskById(id);
+        return task ? task.notes : "";
     }
 }
 
-// Main display containers
+// --- DOM Elements ---
 const mainContainer = document.querySelector(".display");
 const completeTaskDisplay = document.querySelector(".display-done");
-const workProject = new ToDoList("work");
-workProject.displayTasksAll();
-
-const toggleHandler = (event) => {
-    const taskKey = Number(event.target.closest(".task-container").dataset.key);
-
-    if(event.target.classList.contains("done-btn")) {
-        for(const item of workProject.tasks) {
-            if(item.key == taskKey) {
-                item.data.doneStatus = !item.data.doneStatus;
-                localStorage.setItem(item.key, JSON.stringify(item.data));
-                workProject.displayTasksAll();
-            }
-        }
-    }
-    
-    if(event.target.classList.contains("delete-task-btn")) {
-        localStorage.removeItem(taskKey);
-        workProject.displayTasksAll();
-    }
-}
-
-// Add new task btn logic
-// Displaying the form
 const addNewtaskBtn = document.querySelector("#add-task-btn");
 const overlay = document.querySelector(".overlay");
 const formAddTask = document.querySelector(".add-task-form");
-addNewtaskBtn.addEventListener("click", () => {
-    overlay.classList.remove("hidden");
-})
-
 const saveTaskBtn = document.querySelector("#save-task");
-    saveTaskBtn.addEventListener("click", (event) => {
-        event.preventDefault();
-
-        // Client side form validation
-        const taskTitle = document.querySelector("#title-field").value;
-        if(taskTitle.length < 3) {
-            alert("Title must be longer!")
-            return;
-        } else if(taskTitle.length > 60) {
-            alert("Title must be shorter!");
-            return;
-        }
-
-        const taskDescription = document.querySelector("#description-field").value;
-        if(taskDescription.length < 3) {
-            alert("Add a longer desription!");
-            return;
-        } else if(taskDescription.length > 90) {
-            alert("Description must be shorter! (Hint) ->  You can use notes for longer text if needed!");
-            return;
-        }
-
-        const taskDueDate = document.querySelector("#dueDate-field").value;
-         if(!isDateValid(taskDueDate)) {
-            alert("Need to enter a date in the future!");
-            return;
-        }
-
-        const taskNotes = document.querySelector("#notes-field");
-        if(taskNotes.length > 500) {
-            alert("Notes must be shorter!");
-            return;
-        }
-        
-        // Creating a new Task instance with form data
-        const currentTask = new Task(
-            document.querySelector("#title-field").value,
-            document.querySelector("#description-field").value,
-            document.querySelector("#notes-field").value,
-            document.querySelector("#dueDate-field").value,
-            false
-        )
-
-        // Saving task, updating the display
-        workProject.saveNewtask(currentTask);
-        formAddTask.reset();
-        workProject.displayTasksAll();
-        overlay.classList.add("hidden");
-    })
-
-// Closing the form on outside click and cancelBtn
 const cancelFormBtn = document.querySelector("#cancel-new-task");
-overlay.addEventListener("click", (event) => {
-    if(event.target === overlay) overlay.classList.add("hidden");
-})
+const todayBtn = document.querySelector("#today-btn");
+const overdueBtn = document.querySelector("#overdue-btn");
 
-cancelFormBtn.addEventListener("click", (event) => {
-    event.preventDefault();
-    overlay.classList.add("hidden");
-    formAddTask.reset();
-})
+// --- App Initialization ---
+const workProject = new ToDoList("work");
+workProject.render();
+
+// --- Event Handlers ---
+
+function handleTaskActions(event) {
+    const taskContainer = event.target.closest(".task-container");
+    if (!taskContainer) return;
+
+    const taskId = Number(taskContainer.dataset.id);
+
+    if (event.target.classList.contains("done-btn")) {
+        workProject.toggleDoneStatus(taskId);
+    }
+
+    if (event.target.classList.contains("delete-task-btn")) {
+        workProject.deleteTask(taskId);
+    }
+}
 
 // Revealing the notes on click
 const toggleNotes = (event) => {
     if(event.target.classList.contains("task-container")) {
         const taskContainer = event.target.closest(".task-container");
-        const taskKey = Number(taskContainer.dataset.key);
+        const taskId = Number(taskContainer.dataset.id);
         if(taskContainer.dataset.notes === "true") {
             taskContainer.nextElementSibling?.remove();
             taskContainer.dataset.notes = "false";
             return;
         };
 
-        for(const item of workProject.tasks) {
-            if(item.key == taskKey) {
-                taskContainer.classList.toggle("opened");
-                taskContainer.dataset.notes = "true";
-                const notesDiv = document.createElement("div");
-                notesDiv.classList.add("notes-section");
-                notesDiv.textContent = item.data.notes;
-                event.target.closest(".task-container").insertAdjacentElement("afterend", notesDiv);
-            }
+        const notes = workProject.getTaskNotes(taskId);
+        if (notes) {
+            taskContainer.classList.toggle("opened");
+            taskContainer.dataset.notes = "true";
+            const notesDiv = document.createElement("div");
+            notesDiv.classList.add("notes-section");
+            notesDiv.textContent = notes;
+            taskContainer.insertAdjacentElement("afterend", notesDiv);
         }
     }
 }
 
+function showForm() {
+    overlay.classList.remove("hidden");
+}
+
+function hideForm() {
+    overlay.classList.add("hidden");
+    formAddTask.reset();
+}
+
+function validateAndSaveTask(event) {
+    event.preventDefault();
+
+    const title = document.querySelector("#title-field").value;
+    const description = document.querySelector("#description-field").value;
+    const dueDate = document.querySelector("#dueDate-field").value;
+    const notes = document.querySelector("#notes-field").value;
+
+    // Basic validation - could be improved with inline messages
+    if (title.length < 3 || title.length > 60) {
+        alert("Title must be between 3 and 60 characters!");
+        return;
+    }
+    if (description.length < 3 || description.length > 90) {
+        alert("Description must be between 3 and 90 characters!");
+        return;
+    }
+    if (!isDateValid(dueDate)) {
+        alert("Due date must be in the future!");
+        return;
+    }
+    if (notes.length > 500) {
+        alert("Notes must be shorter than 500 characters!");
+        return;
+    }
+
+    const newTask = new Task(title, description, notes, dueDate, false);
+    workProject.saveNewTask(newTask);
+    hideForm();
+}
+
+function highlightTodayTasks() {
+    const today = new Date();
+    workProject.tasks.forEach(task => {
+        const dateOfTask = new Date(task.dueDate);
+        if (dateOfTask.getDate() === today.getDate() &&
+            dateOfTask.getMonth() === today.getMonth() &&
+            dateOfTask.getFullYear() === today.getFullYear()) {
+            const taskContainer = document.querySelector(`[data-id="${task.id}"]`);
+            taskContainer?.classList.toggle("today-task");
+        }
+    });
+}
+
+function highlightOverdueTasks() {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    workProject.tasks.forEach(task => {
+        const dateOfTask = new Date(task.dueDate);
+        if (dateOfTask < today) {
+            const taskContainer = document.querySelector(`[data-id="${task.id}"]`);
+            taskContainer?.classList.toggle("overdue-task");
+        }
+    });
+}
+
+// --- Event Listeners ---
+addNewtaskBtn.addEventListener("click", showForm);
+saveTaskBtn.addEventListener("click", validateAndSaveTask);
+
+overlay.addEventListener("click", (event) => {
+    if (event.target === overlay) hideForm();
+});
+
+cancelFormBtn.addEventListener("click", (event) => {
+    event.preventDefault();
+    hideForm();
+});
+
 mainContainer.addEventListener("click", toggleNotes);
-mainContainer.addEventListener("click", toggleHandler);
-completeTaskDisplay.addEventListener("click", toggleHandler);
+mainContainer.addEventListener("click", handleTaskActions);
+completeTaskDisplay.addEventListener("click", handleTaskActions);
 
-// Event listener for today btn
-const todayBtn = document.querySelector("#today-btn");
-todayBtn.addEventListener("click", () => {
-    for(const item of workProject.tasks) {
-        const dateOfTask = new Date(item.data.dueDate);
-        const today = new Date();
-        
-        if(dateOfTask.getDate() === today.getDate() &&
-           dateOfTask.getMonth() === today.getMonth() &&
-           dateOfTask.getFullYear() === today.getFullYear()) {
-                const taskContainer = document.querySelector(`[data-key="${Number(item.key)}"]`);
-                taskContainer.classList.toggle("today-task");
-        }
-    }
-})
-
-// Event listener for overdued
-const overdueBtn = document.querySelector("#overdue-btn");
-overdueBtn.addEventListener("click", () => {
-    for(const item of workProject.tasks) {
-        const dateOfTask = new Date(item.data.dueDate);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        if(dateOfTask < today) {
-            const taskContainer = document.querySelector(`[data-key="${Number(item.key)}"]`);
-            taskContainer.classList.toggle("overdue-task");
-        }
-    }
-})
+todayBtn.addEventListener("click", highlightTodayTasks);
+overdueBtn.addEventListener("click", highlightOverdueTasks);

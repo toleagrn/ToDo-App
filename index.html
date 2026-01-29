@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To Do App</title>
+<script defer src="main.js"></script></head>
+<body>
+    <header id="header">
+        <h1 class="logo-text">To Do List</h1>
+    </header>
+    <div class="btn-section">
+        <button id="today-btn" class="button">Today</button>
+        <button id="overdue-btn" class="button">Overdue</button>
+            </div>
+        </div>
+    </div>
+    <div class="display-header">
+        <h2 class="heading2">Tasks</h2>
+        <div class="btn-new-section">
+            <button id="add-task-btn" class="button">New Task</button>
+        </div>
+    </div>
+    <div class="display">
+    </div>
+    <h2 class="completed-heading">Completed</h2>
+    <div class="display-done">
+    </div>
+
+    <div class="overlay hidden">
+        <div class="overlay-content">
+            <h2 class="header2">Add new task</h2>
+            <form action="" 
+                method="post" 
+                class="add-task-form"
+                novalidate>
+                <div class="form-group">
+                    <label for="title-field">TITLE</label>
+                    <input type="text" 
+                        id="title-field" 
+                        name="title-field"
+                        minlength="3"
+                        maxlength="60">
+                    <span class="error-message" id="title-error"></span>
+                </div>
+                <div class="form-group">
+                    <label for="description-field">DESCRIPTION</label>
+                    <input type="text" 
+                        id="description-field"
+                        name="description-field"
+                        maxlength="90">
+                    <span class="error-message" id="description-error"></span>
+                </div>
+                <div class="form-group">
+                    <label for="notes-field">NOTES</label>
+                    <textarea type="textarea" 
+                        id="notes-field"
+                        name="notes-field"
+                        rows="4"
+                        maxlength="500"></textarea>
+                    <span class="error-message" id="notes-error"></span>
+                </div>
+                <div class="form-group">
+                    <label for="dueDate-field">DUE DATE</label>
+                    <input type="date" 
+                        id="dueDate-field" 
+                        name="dueDate-field">
+                    <span class="error-message" id="dueDate-error"></span>
+                </div>
+                <div class="form-group">
+                    
+                </div>
+                <div class="form-btn-section">
+                    <button type="submit" id="save-task">Add Task</button>
+                    <button id="cancel-new-task">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
